@@ -1,7 +1,7 @@
 out
 .cache
 .vscode
-build/
+**/build/
 
 CMakeLists.txt.user
 CMakeCache.txt
