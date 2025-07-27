@@ -1,21 +1,38 @@
+#include <cstdint>
+#include <cstdlib>
 #include <iostream>
+#include <vector>
+// clang-format off
+#include "fixed_loop.hpp"
 #include "world_manager.hpp"
-#include <thread>
-#include "fixed_callback.hpp"
+#include "network/network_manager.hpp"
+// clang-format on
+#include "client_server_shared/network_messages.hpp"
 
-int main()
-{
-    std::cout << "physync server" << std::endl;
+int main() {
+  std::cout << "physync server" << std::endl;
 
-    WorldManager world_manager;
+  WorldManager world_manager;
+  NetworkManager network_manager = NetworkManager(5555);
+  const float time_step = 1.0f / 30.0f;
 
-    const float time_step = 1.0f / 60.0f;
-    FixedCallback world_update_callback(time_step);
-    while (true)
-    {
-        world_update_callback.update([&world_manager, time_step]()
-                                     { world_manager.simulate(time_step); });
-        std::cout << "ida" << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(25));
+  world_manager.add_cube(3, 10, 3);
+  world_manager.add_cube(3, 100, 3);
+
+  FixedLoop loop = FixedLoop(time_step);
+  loop.loop([&] {
+    network_manager.check_for_events([] {});
+    world_manager.simulate(1.0f / 30.0f);
+    if (rand()%1 == 0) {
+      world_manager.add_cube(3, 10, 3);
     }
+
+    auto data_obj =
+        Msg::ServerToClient::NewWorldStateData{world_manager.get_cube_data()};
+
+    std::vector<uint8_t> bytes =
+        Msg::get_bytes_to_send(Msg::ServerToClient::NewWorldState, data_obj);
+
+    network_manager.broadcast(bytes);
+  });
 }
