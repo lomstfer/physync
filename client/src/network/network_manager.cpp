@@ -1,9 +1,10 @@
 #include <cstdint>
 #include <vector>
 #define ENET_IMPLEMENTATION
-#include "network_manager.hpp"
 #include <iostream>
+#include <thread>
 #include "enet.h"
+#include "network_manager.hpp"
 
 NetworkManager::NetworkManager(std::string address, int port) {
   if (enet_initialize() != 0) {
@@ -26,37 +27,39 @@ NetworkManager::NetworkManager(std::string address, int port) {
 }
 
 bool NetworkManager::connect() {
+  const int timeout = 500;
+
   enet_server_peer = enet_host_connect(enet_client_host, &e_address, 2, 0);
   if (enet_server_peer == NULL) {
     std::cout << "No available peers for initiating an ENet connection.\n";
-    throw;
+    exit(1);
   }
 
   ENetEvent event{};
-  if (enet_host_service(enet_client_host, &event, 5000) > 0 &&
+  if (enet_host_service(enet_client_host, &event, timeout) > 0 &&
       event.type == ENET_EVENT_TYPE_CONNECT) {
-    std::cout << "Connection succeeded.\n";
+    std::cout << "Connection succeeded." << std::endl;
     return true;
   } else {
     enet_peer_reset(enet_server_peer);
-    std::cout << "Connection failed.\n";
-    return false;
   }
+  std::cout << "Connection failed." << std::endl;
+  return false;
 }
 
-void NetworkManager::check_for_events(std::function<void(std::vector<std::uint8_t>)> data_callback) {
+void NetworkManager::check_for_events(
+    std::function<void(std::vector<std::uint8_t>)> data_callback) {
   ENetEvent event{};
   enet_host_service(enet_client_host, &event, 0);
   switch (event.type) {
     case ENET_EVENT_TYPE_RECEIVE: {
-      std::vector<uint8_t> data_vec(event.packet->data, 
-                                   event.packet->data + event.packet->dataLength);
+      std::vector<uint8_t> data_vec(
+          event.packet->data, event.packet->data + event.packet->dataLength);
       data_callback(data_vec);
 
       enet_packet_destroy(event.packet);
     } break;
     case ENET_EVENT_TYPE_DISCONNECT:
-      puts("Disconnection.");
       break;
   }
 }

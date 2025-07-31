@@ -1,4 +1,5 @@
 // clang-format off
+#include <cstdlib>
 #include <glad/glad.h>
 // clang-format on
 #include <iostream>
@@ -23,13 +24,13 @@ GLFWwindow* init_glfw_window() {
   if (window == NULL) {
     std::cout << "Failed to create GLFW window" << std::endl;
     glfwTerminate();
-    throw;
+    exit(1);
   }
   glfwMakeContextCurrent(window);
 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     std::cout << "Failed to initialize GLAD" << std::endl;
-    throw;
+    exit(1);
   }
 
   return window;
@@ -41,15 +42,17 @@ int main() {
   Renderer renderer = Renderer(init_glfw_window());
 
   NetworkManager network_manager = NetworkManager("127.0.0.1", 5555);
-  network_manager.connect();
+  if (network_manager.connect() == false) {
+    exit(1);
+  }
 
   while (renderer.consume_state(world_state)) {
     network_manager.check_for_events(
         [&world_state](const std::vector<std::uint8_t>& data) {
+          const std::vector<uint8_t> bytes_without_id(data.begin() + 1,
+                                                      data.end());
           switch (data[0]) {
             case Msg::ServerToClient::MsgId::NewWorldState: {
-              const std::vector<uint8_t> bytes_without_id(data.begin() + 1,
-                                                          data.end());
               auto new_world_data =
                   Msg::get_data_struct<Msg::ServerToClient::NewWorldStateData>(
                       bytes_without_id);
