@@ -1,6 +1,7 @@
 #include "world_manager.hpp"
 #include "reactphysics3d/mathematics/Transform.h"
 #include "reactphysics3d/mathematics/Vector3.h"
+#include <cstdlib>
 
 WorldManager::WorldManager() {
   rp3d::Vector3 position(0, 0, 0);
@@ -20,21 +21,25 @@ void WorldManager::add_cube(float x, float y, float z) {
   rp3d::RigidBody* body = _world->createRigidBody(transform);
 
   body->addCollider(_cube_shape, rp3d::Transform::identity());
+  _cubes.push_back(body);
 }
 
 void WorldManager::simulate(float time) {
   _world->update(time);
+  if (rand()%5 == 0) {
+    int r = rand()%(_cubes.size());
+    auto c = _cubes[r];
+    auto p = c->getTransform().getPosition();
+    c->applyWorldForceAtCenterOfMass(rp3d::Vector3(-p.x*10, 200, -p.z*10));
+    c->applyWorldTorque(rp3d::Vector3(10, 10, 10));
+  }
 }
 
 std::vector<Msg::CubeData> WorldManager::get_cube_data() {
   std::vector<Msg::CubeData> data;
 
-  for (int i = 0; i < _world->getNbRigidBodies(); i++) {
-    rp3d::RigidBody* body = _world->getRigidBody(i);
-    // if (body->getCollider(0)->getCollisionShape() != _cube_shape) {
-    //   continue;
-    //   std::cout <<" e";
-    // }
+  for (int i = 0; i < _cubes.size(); i++) {
+    rp3d::RigidBody* body = _cubes[i];
     rp3d::Transform t = body->getTransform();
     rp3d::Vector3 pos = t.getPosition();
     rp3d::Quaternion rot = t.getOrientation();

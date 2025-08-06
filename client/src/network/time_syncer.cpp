@@ -8,13 +8,13 @@ std::vector<uint8_t> TimeSyncer::get_new_request() {
 }
 
 void TimeSyncer::handle_response(Msg::ServerToClient::TimeResponseData data) {
-    float now = utils::unix_time_seconds();
-    float round_trip = now - data.request_time_sent;
-    float one_way_latency = round_trip / 2.f;
+    double now = utils::unix_time_seconds();
+    double round_trip = now - data.request_time_sent;
+    double one_way_latency = round_trip / 2.f;
     
     if (minimum_latency_calculated == -1 || one_way_latency < minimum_latency_calculated) {
         minimum_latency_calculated = one_way_latency;
-        float predicted_server_time = data.response_time_sent + one_way_latency;
+        double predicted_server_time = data.response_time_sent + one_way_latency;
         time_diff_to_server = now - predicted_server_time;
     }
     
@@ -24,8 +24,8 @@ void TimeSyncer::handle_response(Msg::ServerToClient::TimeResponseData data) {
     }
 }
 
-float TimeSyncer::get_server_time() {
-    float now = utils::unix_time_seconds();
+double TimeSyncer::get_server_time() {
+    double now = utils::unix_time_seconds();
 
     return now - time_diff_to_server;
 }

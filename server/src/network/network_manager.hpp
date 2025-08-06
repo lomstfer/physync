@@ -1,13 +1,18 @@
+#include "enet.h"
 #include <cstdint>
 #include <functional>
-#include "enet.h"
+
 
 class NetworkManager {
-  ENetHost* enet_server_host;
+  ENetHost *_enet_server_host;
 
- public:
+public:
   NetworkManager(int port);
   ~NetworkManager();
-  void check_for_events(std::function<void()> callback);
+  void check_for_events(
+      std::function<void(std::vector<std::uint8_t>,
+                         std::function<void(std::vector<std::uint8_t>)>
+                             send_to_client_callback)>
+          data_callback);
   void broadcast(std::vector<std::uint8_t> data);
 };

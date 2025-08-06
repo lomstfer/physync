@@ -30,14 +30,15 @@ enum MsgId { NewWorldState, TimeResponse };
 
 struct NewWorldStateData {
     std::vector<CubeData> cubes;
+    double timestamp;
     template <class Archive> void serialize(Archive &archive) {
-        archive(cubes);
+        archive(cubes, timestamp);
     }
 };
 
 struct TimeResponseData {
-    float request_time_sent;
-    float response_time_sent;
+    double request_time_sent;
+    double response_time_sent;
     template <class Archive> void serialize(Archive &archive) {
         archive(request_time_sent, response_time_sent);
     }
@@ -48,7 +49,7 @@ namespace ClientToServer {
 enum MsgId { TimeRequest };
 
 struct TimeRequestData {
-    float request_time_sent;
+    double request_time_sent;
     template <class Archive> void serialize(Archive &archive) {
         archive(request_time_sent);
     }

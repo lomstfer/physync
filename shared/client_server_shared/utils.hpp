@@ -2,8 +2,8 @@
 #include <chrono>
 
 namespace utils {
-inline float unix_time_seconds() {
-    return std::chrono::duration<float>(
+inline double unix_time_seconds() {
+    return std::chrono::duration<double>(
                std::chrono::high_resolution_clock::now().time_since_epoch())
         .count();
 }
